@@ -1,0 +1,96 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Africa/Douala
+
+# Installation des dépendances
+RUN apt-get update && apt-get install -y \
+    apache2 \
+    apache2-dev \
+    autoconf \
+    build-essential \
+    bzip2 \
+    cmake \
+    fonts-noto-cjk \
+    fonts-noto-hinted \
+    fonts-noto-unhinted \
+    gcc \
+    gdal-bin \
+    git \
+    libagg-dev \
+    libboost-all-dev \
+    libbz2-dev \
+    libcairo2-dev \
+    libcairomm-1.0-dev \
+    libexpat1-dev \
+    libfreetype6-dev \
+    libgdal-dev \
+    libgeos++-dev \
+    libgeos-dev \
+    libicu-dev \
+    liblua5.3-dev \
+    libmapnik-dev \
+    libpq-dev \
+    libproj-dev \
+    libprotobuf-c-dev \
+    libtiff5-dev \
+    libtool \
+    libxml2-dev \
+    lua5.3 \
+    make \
+    mapnik-utils \
+    nodejs \
+    npm \
+    osmosis \
+    postgis \
+    postgresql-client \
+    protobuf-c-compiler \
+    python3-mapnik \
+    python3-lxml \
+    python3-psycopg2 \
+    python3-shapely \
+    sudo \
+    tar \
+    fonts-unifont \
+    unzip \
+    wget \
+    zlib1g-dev \
+    osm2pgsql \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installer mod_tile et renderd
+WORKDIR /tmp
+RUN git clone -b switch2osm https://github.com/SomeoneElseOSM/mod_tile.git && \
+    cd mod_tile && \
+    ./autogen.sh && \
+    ./configure && \
+    make && \
+    make install && \
+    make install-mod_tile && \
+    ldconfig && \
+    cd .. && rm -rf mod_tile
+
+# Configuration Apache
+RUN a2enmod tile && \
+    a2enmod headers && \
+    a2enmod rewrite
+
+# Créer les répertoires
+RUN mkdir -p /var/lib/mod_tile && \
+    mkdir -p /var/run/renderd && \
+    mkdir -p /data/osm && \
+    mkdir -p /usr/share/mapnik-osm-data && \
+    chown -R www-data:www-data /var/lib/mod_tile && \
+    chown -R www-data:www-data /var/run/renderd
+
+# Copier les fichiers de configuration
+COPY renderd.conf /etc/renderd.conf
+COPY apache-tileserver.conf /etc/apache2/sites-available/000-default.conf
+COPY start.sh /start.sh
+COPY import-osm.sh /usr/local/bin/import-osm.sh
+
+RUN chmod +x /start.sh /usr/local/bin/import-osm.sh
+
+EXPOSE 80
+
+CMD ["/start.sh"]

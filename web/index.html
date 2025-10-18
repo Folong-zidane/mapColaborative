@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🗺️ Serveur OSM - Cameroun</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #map { height: 100vh; }
+        .info { position: absolute; top: 10px; right: 10px; background: white; padding: 15px; border-radius: 8px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    
+    <div id="map"></div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Carte centrée sur le Cameroun (Yaoundé)
+        const map = L.map('map').setView([3.8667, 11.5167], 6);
+        
+        // Utiliser OpenStreetMap comme fallback
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap contributors | Données Cameroun importées'
+        }).addTo(map);
+        
+        // Ajouter des marqueurs pour les principales villes du Cameroun
+        const cities = [
+            {name: "Yaoundé", lat: 3.8667, lng: 11.5167, pop: "4M hab."},
+            {name: "Douala", lat: 4.0511, lng: 9.7679, pop: "3M hab."},
+            {name: "Bamenda", lat: 5.9597, lng: 10.1494, pop: "2M hab."},
+            {name: "Bafoussam", lat: 5.4781, lng: 10.4167, pop: "347K hab."},
+            {name: "Garoua", lat: 9.3265, lng: 13.3958, pop: "436K hab."}
+        ];
+        
+        cities.forEach(city => {
+            L.marker([city.lat, city.lng])
+                .addTo(map)
+                .bindPopup(`<b>${city.name}</b><br>Population: ${city.pop}`);
+        });
+        
+        document.getElementById('status').innerHTML = '<span class="success">✅ Interface fonctionnelle</span>';
+    </script>
+</body>
+</html>

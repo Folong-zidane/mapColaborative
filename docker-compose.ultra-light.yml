@@ -1,0 +1,51 @@
+# Version ULTRA-LÉGÈRE avec Nginx (200 Mo total)
+services:
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: osm-postgres
+    environment:
+      POSTGRES_DB: gis
+      POSTGRES_USER: osmuser
+      POSTGRES_PASSWORD: osmpassword
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - osm-network
+
+  tileserver:
+    image: overv/openstreetmap-tile-server:latest
+    container_name: osm-tileserver
+    depends_on:
+      - postgres
+    environment:
+      PGHOST: postgres
+      PGDATABASE: gis
+      PGUSER: osmuser
+      PGPASSWORD: osmpassword
+    volumes:
+      - tile-cache:/data/tiles
+      - ./data:/data
+    command: run
+    networks:
+      - osm-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: osm-nginx
+    depends_on:
+      - tileserver
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./web:/usr/share/nginx/html
+    networks:
+      - osm-network
+
+volumes:
+  postgres-data:
+  tile-cache:
+  osm-data:
+
+networks:
+  osm-network:

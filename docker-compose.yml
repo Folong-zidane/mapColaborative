@@ -1,0 +1,66 @@
+# Docker Compose pour serveur OSM
+
+services:
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: osm-postgres
+    environment:
+      - POSTGRES_DB=gis
+      - POSTGRES_USER=osmuser
+      - POSTGRES_PASSWORD=osmpassword
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - osm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U osmuser -d gis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres
+      -c shared_buffers=2GB
+      -c work_mem=512MB
+      -c maintenance_work_mem=2GB
+      -c effective_cache_size=6GB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c random_page_cost=1.1
+
+  tileserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.tileserver
+    container_name: osm-tileserver
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - PGHOST=postgres
+      - PGDATABASE=gis
+      - PGUSER=osmuser
+      - PGPASSWORD=osmpassword
+    volumes:
+      - tile-cache:/var/lib/mod_tile
+      - osm-data:/data/osm
+      - ./openstreetmap-carto:/usr/share/mapnik-osm-data/openstreetmap-carto
+    ports:
+      - "80:80"
+    networks:
+      - osm-network
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    driver: local
+  tile-cache:
+    driver: local
+  osm-data:
+    driver: local
+
+networks:
+  osm-network:
+    driver: bridge

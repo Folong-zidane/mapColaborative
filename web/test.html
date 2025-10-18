@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Serveur OSM</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>🗺️ Test du Serveur OSM</h1>
+    
+    <div class="test" id="server-test">
+        <h3>Test 1: Serveur Apache</h3>
+        <p id="server-status">Test en cours...</p>
+    </div>
+    
+    <div class="test" id="tile-test">
+        <h3>Test 2: Génération de tuiles</h3>
+        <p id="tile-status">Test en cours...</p>
+        <img id="tile-img" style="display:none; border: 1px solid #000;" />
+    </div>
+    
+    <div class="test" id="map-test">
+        <h3>Test 3: Carte interactive</h3>
+        <div id="map-container" style="width: 100%; height: 300px; border: 1px solid #000; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+            Chargement de la carte...
+        </div>
+    </div>
+
+    <script>
+        // Test 1: Serveur Apache
+        fetch('/')
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('server-status').textContent = '✅ Serveur Apache fonctionne';
+                    document.getElementById('server-test').className = 'test success';
+                } else {
+                    throw new Error('Serveur non accessible');
+                }
+            })
+            .catch(error => {
+                document.getElementById('server-status').textContent = '❌ ' + error.message;
+                document.getElementById('server-test').className = 'test error';
+            });
+
+        // Test 2: Tuiles
+        const tileImg = document.getElementById('tile-img');
+        tileImg.onload = function() {
+            document.getElementById('tile-status').textContent = '✅ Tuiles générées avec succès';
+            document.getElementById('tile-test').className = 'test success';
+            tileImg.style.display = 'block';
+            
+            // Test 3: Carte interactive si les tuiles fonctionnent
+            loadMap();
+        };
+        
+        tileImg.onerror = function() {
+            document.getElementById('tile-status').textContent = '❌ Erreur de génération des tuiles';
+            document.getElementById('tile-test').className = 'test error';
+            
+            // Essayer quand même la carte
+            loadMap();
+        };
+        
+        // Tester une tuile de base (monde entier, zoom 0)
+        tileImg.src = '/tile/0/0/0.png';
+
+        function loadMap() {
+            // Charger Leaflet
+            const leafletCSS = document.createElement('link');
+            leafletCSS.rel = 'stylesheet';
+            leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            document.head.appendChild(leafletCSS);
+            
+            const leafletJS = document.createElement('script');
+            leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            leafletJS.onload = function() {
+                try {
+                    const map = L.map('map-container').setView([3.8667, 11.5167], 6);
+                    
+                    L.tileLayer('/tile/{z}/{x}/{y}.png', {
+                        maxZoom: 18,
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+                    
+                    document.getElementById('map-test').className = 'test success';
+                } catch (error) {
+                    document.getElementById('map-container').textContent = '❌ Erreur: ' + error.message;
+                    document.getElementById('map-test').className = 'test error';
+                }
+            };
+            document.head.appendChild(leafletJS);
+        }
+    </script>
+</body>
+</html>

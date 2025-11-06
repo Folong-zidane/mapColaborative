@@ -109,3 +109,4 @@ sudo ufw enable
 # Networking → Security Lists → Ajouter règle Ingress
 # Source: 0.0.0.0/0, Port: 80
 ```
+# openStream-Map-for-Locality

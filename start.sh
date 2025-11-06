@@ -5,7 +5,7 @@ echo "🚀 Démarrage du serveur de tuiles OSM..."
 
 # Attendre PostgreSQL
 echo "⏳ Attente de PostgreSQL..."
-until PGPASSWORD=$PGPASSWORD psql -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -c '\q'; do
+until PGPASSWORD=osmpass psql -h postgres -U osmuser -d gis -c '\q'; do
   echo "PostgreSQL pas encore prêt - attente..."
   sleep 2
 done

@@ -3,7 +3,7 @@
 services:
   postgres:
     image: postgis/postgis:15-3.3
-    container_name: osm-postgres
+    container_name: osm-postgres-new
     environment:
       - POSTGRES_DB=gis
       - POSTGRES_USER=osmuser
@@ -31,10 +31,8 @@ services:
       -c random_page_cost=1.1
 
   tileserver:
-    build:
-      context: .
-      dockerfile: Dockerfile.tileserver
-    container_name: osm-tileserver
+    image: overv/openstreetmap-tile-server:latest
+    container_name: osm-tileserver-new
     depends_on:
       postgres:
         condition: service_healthy
@@ -43,15 +41,17 @@ services:
       - PGDATABASE=gis
       - PGUSER=osmuser
       - PGPASSWORD=osmpassword
+      - OSM2PGSQL_EXTRA_ARGS=-C 2048
     volumes:
       - tile-cache:/var/lib/mod_tile
       - osm-data:/data/osm
       - ./openstreetmap-carto:/usr/share/mapnik-osm-data/openstreetmap-carto
     ports:
-      - "80:80"
+      - "8082:80"
     networks:
       - osm-network
     restart: unless-stopped
+    command: run
 
 volumes:
   postgres-data:
